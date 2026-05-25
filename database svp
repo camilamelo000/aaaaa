@@ -1,0 +1,144 @@
+-- usuários 
+CREATE TABLE Usuarios (
+    id_usuario INT AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    tipo_usuario ENUM('paciente', 'profissional', 'administrador') NOT NULL,
+    PRIMARY KEY (id_usuario)
+);
+
+CREATE TABLE Pacientes (
+    id_usuario INT,
+    preferencia_tema VARCHAR(20) DEFAULT 'claro',
+    data_nascimento DATE NOT NULL,
+    contato_emergencia VARCHAR(100),
+    PRIMARY KEY (id_usuario),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE Profissionais (
+    id_usuario INT,
+    registro_profissional VARCHAR(50) NOT NULL UNIQUE,
+    especialidade VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_usuario),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Acompanhamentos (
+    id_vinculo INT AUTO_INCREMENT,
+    id_paciente INT NOT NULL,
+    id_profissional INT NOT NULL,
+    clinica_local VARCHAR(150),
+    data_inicio DATE NOT NULL,
+    status_vinculo VARCHAR(20) DEFAULT 'pendente',
+    PRIMARY KEY (id_vinculo),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario),
+    FOREIGN KEY (id_profissional) REFERENCES Profissionais(id_usuario)
+);
+
+CREATE TABLE Sessoes_Diario_Profissional (
+    id_sessao INT AUTO_INCREMENT,
+    id_vinculo INT NOT NULL,
+    data_sessao DATETIME NOT NULL,
+    anotacoes_profissional TEXT,
+    licao_de_casa TEXT,
+    PRIMARY KEY (id_sessao),
+    FOREIGN KEY (id_vinculo) REFERENCES Acompanhamentos(id_vinculo) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Registros_Sintomas (
+    id_registro INT AUTO_INCREMENT,
+    id_paciente INT NOT NULL,
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    nivel_sobrecarga INT NOT NULL CHECK (nivel_sobrecarga BETWEEN 1 AND 5),
+    anotacoes_diario TEXT,
+    PRIMARY KEY (id_registro),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE Tags (
+    id_tag INT AUTO_INCREMENT,
+    nome_tag VARCHAR(50) NOT NULL UNIQUE,
+    tipo_tag ENUM('sensibilidade', 'sintoma', 'geral') NOT NULL,
+    PRIMARY KEY (id_tag)
+);
+
+-- TABELAS INTERMEDIÁRIAS DE TAGS (N:N)
+CREATE TABLE Pacientes_Sensibilidades (
+    id_paciente INT,
+    id_tag INT,
+    PRIMARY KEY (id_paciente, id_tag),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_tag) REFERENCES Tags(id_tag) ON DELETE CASCADE
+);
+
+CREATE TABLE Registros_Sintomas_Tags (
+    id_registro INT,
+    id_tag INT,
+    PRIMARY KEY (id_registro, id_tag),
+    FOREIGN KEY (id_registro) REFERENCES Registros_Sintomas(id_registro) ON DELETE CASCADE,
+    FOREIGN KEY (id_tag) REFERENCES Tags(id_tag) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Artigos (
+    id_artigo INT AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    autor VARCHAR(100),
+    conteudo_texto LONGTEXT NOT NULL,
+    data_publicacao DATE NOT NULL,
+    PRIMARY KEY (id_artigo)
+);
+
+CREATE TABLE Sons_Relaxantes (
+    id_som INT AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    url_arquivo VARCHAR(255) NOT NULL,
+    duracao_segundos INT NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id_som)
+);
+
+CREATE TABLE Jogos_Interativos (
+    id_jogo INT AUTO_INCREMENT,
+    nome_jogo VARCHAR(100) NOT NULL,
+    tipo_estimulo VARCHAR(100) NOT NULL,
+    url_jogo VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id_jogo)
+);
+
+-- tabelas de like
+CREATE TABLE Artigos_Tags (
+    id_artigo INT,
+    id_tag INT,
+    PRIMARY KEY (id_artigo, id_tag),
+    FOREIGN KEY (id_artigo) REFERENCES Artigos(id_artigo) ON DELETE CASCADE,
+    FOREIGN KEY (id_tag) REFERENCES Tags(id_tag) ON DELETE CASCADE
+);
+
+CREATE TABLE Favoritos_Artigos (
+    id_paciente INT,
+    id_artigo INT,
+    PRIMARY KEY (id_paciente, id_artigo),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_artigo) REFERENCES Artigos(id_artigo) ON DELETE CASCADE
+);
+
+CREATE TABLE Favoritos_Sons (
+    id_paciente INT,
+    id_som INT,
+    PRIMARY KEY (id_paciente, id_som),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_som) REFERENCES Sons_Relaxantes(id_som) ON DELETE CASCADE
+);
+
+CREATE TABLE Favoritos_Jogos (
+    id_paciente INT,
+    id_jogo INT,
+    PRIMARY KEY (id_paciente, id_jogo),
+    FOREIGN KEY (id_paciente) REFERENCES Pacientes(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_jogo) REFERENCES Jogos_Interativos(id_jogo) ON DELETE CASCADE
+);
